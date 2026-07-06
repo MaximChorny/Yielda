@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Yielda"
 include(":app")
+include(":search")
