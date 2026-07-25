@@ -1,7 +1,6 @@
 package com.stocks.yielda
 
 import android.app.Application
-import com.stocks.yielda.search.searchModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -12,7 +11,7 @@ class YieldaApp : Application() {
             androidContext(this@YieldaApp)
             modules(
                 appModule,
-                searchModule,
+//                searchModule,
             )
         }
     }

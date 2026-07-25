@@ -2,7 +2,7 @@
 
 ## Summary
 
-Yielda is currently a single-module Android app with project-local agent skills.
+Yielda is currently an Android app with a shared KMP `search` feature module, an iOS Xcode app shell, and project-local agent skills.
 
 ## Modules
 
@@ -15,12 +15,32 @@ Yielda is currently a single-module Android app with project-local agent skills.
 - Unit tests: `app/src/test`
 - Instrumented tests: `app/src/androidTest`
 
+### `:search`
+
+- Path: [`search/`](../search/)
+- Type: Kotlin Multiplatform library feature module
+- Purpose: shared search state and shared search UI for iOS and Android, plus Android packaging/resources
+- Main source roots: `search/src/commonMain`, `search/src/main`
+- Unit tests: `search/src/test`
+- Instrumented tests: `search/src/androidTest`
+
+### `iosApp`
+
+- Path: [`iosApp/`](../iosApp/)
+- Type: iOS Xcode application shell
+- Purpose: launch and host the shared KMP UI on iOS
+- Main source roots: `iosApp/iosApp`, `search/src/iosMain`
+
 ## Current Contents
 
 - `app/src/main/java/com/stocks/yielda/MainActivity.kt` - app entry activity
 - `app/src/main/res/` - app resources, launcher icons, strings, theme, colors, XML config
 - `app/src/test/java/com/stocks/yielda/ExampleUnitTest.kt` - sample unit test
 - `app/src/androidTest/java/com/stocks/yielda/ExampleInstrumentedTest.kt` - sample instrumented test
+- `search/src/commonMain/kotlin/com/stocks/search/` - shared search state, DI, ViewModel, and screen UI
+- `search/src/iosMain/kotlin/com/stocks/search/` - iOS Compose entrypoint for the search UI
+- `search/src/main/` - Android manifest and resources for the search feature
+- `iosApp/iosApp/` - SwiftUI app shell embedding the shared Compose UI
 
 ## Agent Guidance
 
