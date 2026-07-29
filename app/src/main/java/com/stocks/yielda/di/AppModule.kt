@@ -1,4 +1,4 @@
-package com.stocks.yielda
+package com.stocks.yielda.di
 
 import org.koin.core.module.Module
 import org.koin.dsl.module

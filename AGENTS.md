@@ -37,3 +37,15 @@ Use these local Android skills for common concerns:
 
 When an agent creates a new module, it must also create a matching module description file under
 `docs/modules/` in the same change.
+
+## Interface Rule
+
+If there is only one implementation of a type, prefer a concrete class over an interface.
+Introduce an interface only when there are at least two real implementations or an explicit
+abstraction boundary is needed for testability or platform separation.
+
+## Generated Files Rule
+
+After changing code that affects generated or exported files, always verify the generated
+output that consumers actually use. This includes KMP Swift exports, generated bindings,
+Gradle-generated sources, and any file whose public symbol name may differ from the source name.

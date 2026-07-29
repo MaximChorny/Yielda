@@ -1,9 +1,23 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec
+import java.util.Properties
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.buildkonfig)
 }
+
+val secretsProperties = Properties().apply {
+    val secretsFile = rootProject.file("secrets.properties")
+    if (secretsFile.exists()) {
+        secretsFile.inputStream().use { load(it) }
+    }
+}
+
+val finnhubApiKey: String = secretsProperties.getProperty("FINNHUB_API_KEY", "")
 
 kotlin {
     android {
@@ -28,6 +42,11 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.jetbrains.lifecycle.viewmodel)
             implementation(compose.runtime)
@@ -35,5 +54,21 @@ kotlin {
             implementation(compose.material3)
             implementation(compose.ui)
         }
+
+        androidMain.dependencies {
+            implementation(libs.ktor.client.cio)
+        }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+    }
+}
+
+buildkonfig {
+    packageName = "com.stocks.search"
+
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.STRING, "FINNHUB_API_KEY", finnhubApiKey)
     }
 }
