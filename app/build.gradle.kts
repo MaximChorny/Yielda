@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -46,8 +47,10 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(compose.components.resources)
     implementation(libs.androidx.core.ktx)
     implementation(project(":search"))
+    implementation(project(":ui"))
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)

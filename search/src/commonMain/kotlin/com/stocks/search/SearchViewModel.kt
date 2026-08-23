@@ -20,10 +20,13 @@ class SearchViewModel(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val _state = MutableStateFlow(SearchUiState())
     val state: StateFlow<SearchUiState> = _state.asStateFlow()
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
     private var searchJob: Job? = null
 
     fun onQueryChange(query: String) {
-        _state.value = _state.value.copy(query = query, errorMessage = null)
+        _query.value = query
+        _state.value = _state.value.copy(errorMessage = null)
 
         searchJob?.cancel()
 
@@ -35,7 +38,7 @@ class SearchViewModel(
 
         searchJob = scope.launch {
             delay(300)
-            if (_state.value.query.trim() != trimmedQuery) {
+            if (_query.value.trim() != trimmedQuery) {
                 return@launch
             }
 

@@ -21,3 +21,4 @@
 *.rar
 hs_err_pid*
 replay_pid*
+/ui/build/

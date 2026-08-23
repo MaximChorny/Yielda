@@ -19,11 +19,18 @@ val secretsProperties = Properties().apply {
 
 val finnhubApiKey: String = secretsProperties.getProperty("FINNHUB_API_KEY", "")
 
+compose.resources {
+    packageOfResClass = "com.stocks.search.generated.resources"
+}
+
 kotlin {
     android {
         namespace = "com.stocks.yielda.search"
         compileSdk {
             version = release(37)
+        }
+        androidResources {
+            enable = true
         }
     }
 
@@ -40,6 +47,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":ui"))
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.client.core)
@@ -53,6 +61,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.components.resources)
         }
 
         androidMain.dependencies {
