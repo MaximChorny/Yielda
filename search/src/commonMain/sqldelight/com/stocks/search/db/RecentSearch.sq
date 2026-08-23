@@ -1,0 +1,35 @@
+CREATE TABLE recent_search (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
+    display_symbol TEXT NOT NULL,
+    type TEXT NOT NULL
+);
+
+selectRecentSearches:
+SELECT symbol, description, display_symbol, type
+FROM recent_search
+ORDER BY id DESC
+LIMIT 10;
+
+deleteRecentSearch:
+DELETE FROM recent_search
+WHERE symbol = ?;
+
+saveRecentSearch:
+INSERT INTO recent_search(
+    symbol,
+    description,
+    display_symbol,
+    type
+)
+VALUES (?, ?, ?, ?);
+
+trimRecentSearches:
+DELETE FROM recent_search
+WHERE symbol NOT IN (
+    SELECT symbol
+    FROM recent_search
+    ORDER BY id DESC
+    LIMIT 10
+);

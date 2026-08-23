@@ -18,24 +18,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,11 +49,21 @@ import org.jetbrains.compose.resources.painterResource
 fun SearchScreen(
     viewModel: SearchViewModel,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val results by viewModel.results.collectAsStateWithLifecycle()
+    val recentSearchResults by viewModel.recentSearchResults.collectAsStateWithLifecycle()
     val queryState = viewModel.query.collectAsStateWithLifecycle()
+    val displayedResults = if (queryState.value.trim().isEmpty()) {
+        recentSearchResults
+    } else {
+        results
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.start()
+    }
 
     SearchContent(
-        state = state,
+        results = displayedResults,
         queryState = queryState,
         onQueryChange = viewModel::onQueryChange,
     )
@@ -65,7 +71,7 @@ fun SearchScreen(
 
 @Composable
 private fun SearchContent(
-    state: SearchUiState,
+    results: List<SearchResultItem>,
     queryState: State<String>,
     onQueryChange: (String) -> Unit,
 ) {
@@ -88,21 +94,8 @@ private fun SearchContent(
         )
         Spacer(Modifier.height(24.dp))
 
-        when {
-            state.isLoading -> {
-                CircularProgressIndicator()
-            }
-
-            state.errorMessage != null -> {
-                Text(
-                    text = state.errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            }
-
-            state.results.isEmpty() -> {
-                Text(text = "No matches")
-            }
+        if (results.isEmpty()) {
+            Text(text = "No matches")
         }
 
         Box(
@@ -114,8 +107,10 @@ private fun SearchContent(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(state.results, key = { item -> item.symbol }) { item ->
-                    SearchResultRow(item = item)
+                items(results, key = { item -> item.symbol }) { item ->
+                    SearchResultRow(
+                        item = item,
+                    )
                 }
             }
         }

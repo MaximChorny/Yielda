@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.buildkonfig)
+    alias(libs.plugins.sqldelight)
 }
 
 val secretsProperties = Properties().apply {
@@ -42,6 +43,7 @@ kotlin {
         target.binaries.framework {
             baseName = "Search"
             isStatic = true
+            linkerOpts("-lsqlite3")
         }
     }
 
@@ -57,6 +59,8 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.jetbrains.lifecycle.viewmodel)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines.extensions)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -66,10 +70,21 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.ktor.client.cio)
+            implementation(libs.koin.android)
+            implementation(libs.sqldelight.android.driver)
         }
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation(libs.sqldelight.native.driver)
+        }
+    }
+}
+
+sqldelight {
+    databases {
+        create("SearchDatabase") {
+            packageName.set("com.stocks.search.db")
         }
     }
 }

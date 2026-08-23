@@ -1,71 +1,100 @@
 package com.stocks.search
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.stocks.search.repo.FinnhubSearchRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import com.stocks.search.repo.RecentSearchRepository
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SearchViewModel(
     private val repository: FinnhubSearchRepository,
+    private val recentSearchRepository: RecentSearchRepository,
 ) : ViewModel() {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val _state = MutableStateFlow(SearchUiState())
-    val state: StateFlow<SearchUiState> = _state.asStateFlow()
-    private val _query = MutableStateFlow("")
-    val query: StateFlow<String> = _query.asStateFlow()
+
+    val results = MutableStateFlow<List<SearchResultItem>>(emptyList())
+    val recentSearchResults: StateFlow<List<SearchResultItem>> = recentSearchRepository
+        .observeRecentSearches()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList(),
+        )
+
+    val query = MutableStateFlow("")
     private var searchJob: Job? = null
+    private var saveSearchResultsJob: Job? = null
 
-    fun onQueryChange(query: String) {
-        _query.value = query
-        _state.value = _state.value.copy(errorMessage = null)
-
-        searchJob?.cancel()
-
-        val trimmedQuery = query.trim()
-        if (trimmedQuery.isEmpty()) {
-            _state.value = SearchUiState()
+    fun start() {
+        if (saveSearchResultsJob?.isActive == true) {
             return
         }
 
-        searchJob = scope.launch {
-            delay(300)
-            if (_query.value.trim() != trimmedQuery) {
+        saveSearchResultsJob = viewModelScope.launch {
+            combine(query, results) { currentQuery, currentResults ->
+                currentQuery.trim() to currentResults
+            }
+                .filter { (currentQuery, currentResults) ->
+                    currentQuery.isNotEmpty() && currentResults.isNotEmpty()
+                }
+                .collectLatest { (_, currentResults) ->
+                    currentResults.take(3).forEach { resultItem ->
+                        saveResultItem(resultItem)
+                        delay(1.seconds)
+                    }
+                }
+        }
+    }
+
+    fun onQueryChange(newQuery: String) {
+        searchJob?.cancel()
+
+        val trimmedQuery = newQuery.trim()
+        if (trimmedQuery.isEmpty()) {
+            query.value = newQuery
+            results.value = emptyList()
+            return
+        }
+
+        results.value = emptyList()
+        query.value = newQuery
+
+        searchJob = viewModelScope.launch {
+            delay(300.milliseconds)
+            if (query.value.trim() != trimmedQuery) {
                 return@launch
             }
 
-            _state.value = _state.value.copy(isLoading = true, results = emptyList())
             try {
-                val results = repository.search(trimmedQuery)
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    results = results,
-                    errorMessage = null,
-                )
+                val searchResults = repository.search(trimmedQuery)
+                results.value = searchResults
             } catch (throwable: Throwable) {
                 if (throwable is CancellationException) {
                     throw throwable
                 }
 
-                _state.value = _state.value.copy(
-                    isLoading = false,
-                    results = emptyList(),
-                    errorMessage = throwable.message ?: "Search failed",
-                )
+                results.value = emptyList()
             }
         }
     }
 
-    override fun onCleared() {
-        searchJob?.cancel()
-        scope.cancel()
+    private suspend fun saveResultItem(item: SearchResultItem) {
+        withContext(Dispatchers.IO) {
+            recentSearchRepository.saveRecentSearch(item)
+        }
     }
 }
