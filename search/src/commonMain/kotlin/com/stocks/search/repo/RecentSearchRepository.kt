@@ -18,12 +18,13 @@ class RecentSearchRepository(
     }
 
     private fun recentSearchesQuery() = database.recentSearchQueries.selectRecentSearches(
-        mapper = { symbol, description, displaySymbol, type ->
+        mapper = { symbol, description, displaySymbol, type, iconUrl ->
             SearchResultItem(
                 symbol = symbol,
                 description = description,
                 displaySymbol = displaySymbol,
                 type = type,
+                iconUrl = iconUrl,
             )
         },
     )
@@ -36,6 +37,7 @@ class RecentSearchRepository(
                 description = item.description,
                 display_symbol = item.displaySymbol,
                 type = item.type,
+                icon_url = item.iconUrl,
             )
             database.recentSearchQueries.trimRecentSearches()
         }

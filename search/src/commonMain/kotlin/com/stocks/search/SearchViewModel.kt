@@ -53,7 +53,10 @@ class SearchViewModel(
                 }
                 .collectLatest { (_, currentResults) ->
                     currentResults.take(3).forEach { resultItem ->
-                        saveResultItem(resultItem)
+                        val iconUrl = runCatching {
+                            repository.getCompanyProfile(resultItem.symbol).logo
+                        }.getOrDefault(resultItem.iconUrl)
+                        saveResultItem(resultItem.copy(iconUrl = iconUrl))
                         delay(1.seconds)
                     }
                 }

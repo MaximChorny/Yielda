@@ -30,12 +30,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.stocks.search.generated.resources.Res
 import com.stocks.search.generated.resources.ic_search
 import com.stocks.search.generated.resources.ic_buy
@@ -140,13 +143,24 @@ private fun SearchResultRow(
                 .background(YieldaTheme.colorScheme.backgroundScreen, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = item.symbol.firstOrNull()?.uppercase() ?: item.description.firstOrNull()
-                    ?.uppercase() ?: "",
-                color = YieldaTheme.colorScheme.onBackground,
-                style = YieldaTheme.typography.medium,
-                maxLines = 1,
-            )
+            if (item.iconUrl.isEmpty()) {
+                Text(
+                    text = item.symbol.firstOrNull()?.uppercase() ?: item.description.firstOrNull()
+                        ?.uppercase().orEmpty(),
+                    color = YieldaTheme.colorScheme.onBackground,
+                    style = YieldaTheme.typography.medium,
+                    maxLines = 1,
+                )
+            } else {
+                AsyncImage(
+                    model = item.iconUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.size(10.dp))

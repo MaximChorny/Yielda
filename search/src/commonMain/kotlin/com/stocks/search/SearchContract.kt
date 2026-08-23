@@ -5,4 +5,5 @@ data class SearchResultItem(
     val description: String,
     val displaySymbol: String,
     val type: String,
+    val iconUrl: String = "",
 )

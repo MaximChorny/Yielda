@@ -1,0 +1,45 @@
+CREATE TABLE company_profile (
+    ticker TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    country TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    estimate_currency TEXT NOT NULL,
+    exchange TEXT NOT NULL,
+    ipo TEXT NOT NULL,
+    market_capitalization REAL NOT NULL,
+    logo TEXT NOT NULL,
+    share_outstanding REAL NOT NULL,
+    finnhub_industry TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    weburl TEXT NOT NULL,
+    floating_share REAL NOT NULL
+);
+
+selectCompanyProfile:
+SELECT *
+FROM company_profile
+WHERE ticker = ?;
+
+selectCompanyProfileLogo:
+SELECT logo
+FROM company_profile
+WHERE ticker = ?;
+
+saveCompanyProfile:
+INSERT OR REPLACE INTO company_profile(
+    ticker,
+    name,
+    country,
+    currency,
+    estimate_currency,
+    exchange,
+    ipo,
+    market_capitalization,
+    logo,
+    share_outstanding,
+    finnhub_industry,
+    phone,
+    weburl,
+    floating_share
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

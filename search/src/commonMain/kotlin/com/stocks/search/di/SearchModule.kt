@@ -10,7 +10,7 @@ import org.koin.dsl.module
 
 val searchModule: Module = module {
     single { SearchDatabase(get<SearchDatabaseDriverFactory>().createDriver()) }
-    single { FinnhubSearchRepository(get()) }
+    single { FinnhubSearchRepository(get(), get()) }
     single { RecentSearchRepository(get()) }
     factory { SearchViewModel(get(), get()) }
 }

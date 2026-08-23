@@ -3,11 +3,12 @@ CREATE TABLE recent_search (
     symbol TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL,
     display_symbol TEXT NOT NULL,
-    type TEXT NOT NULL
+    type TEXT NOT NULL,
+    icon_url TEXT NOT NULL
 );
 
 selectRecentSearches:
-SELECT symbol, description, display_symbol, type
+SELECT symbol, description, display_symbol, type, icon_url
 FROM recent_search
 ORDER BY id DESC
 LIMIT 10;
@@ -21,9 +22,10 @@ INSERT INTO recent_search(
     symbol,
     description,
     display_symbol,
-    type
+    type,
+    icon_url
 )
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?);
 
 trimRecentSearches:
 DELETE FROM recent_search
