@@ -1,8 +1,10 @@
 package com.stocks.search.repo
 
 import com.stocks.search.SearchResultItem
+import com.stocks.search.StockQuote
 import com.stocks.search.db.SearchDatabase
 import com.stocks.search.repo.api.FinnhubCompanyProfileDto
+import com.stocks.search.repo.api.FinnhubQuoteDto
 import com.stocks.search.repo.api.FinnhubSearchResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -42,6 +44,22 @@ class FinnhubSearchRepository(
             saveCompanyProfile(profile)
         }
         return profile
+    }
+
+    suspend fun getQuote(symbol: String): StockQuote {
+        val quote = client.get("quote") {
+            parameter("symbol", symbol)
+        }.body<FinnhubQuoteDto>()
+
+        return StockQuote(
+            currentPrice = quote.c,
+            change = quote.d,
+            percentChange = quote.dp,
+            highPriceOfTheDay = quote.h,
+            lowPriceOfTheDay = quote.l,
+            openPriceOfTheDay = quote.o,
+            previousClosePrice = quote.pc,
+        )
     }
 
     suspend fun saveCompanyProfile(profile: FinnhubCompanyProfileDto) {

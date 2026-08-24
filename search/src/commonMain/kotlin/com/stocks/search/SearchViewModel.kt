@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +40,11 @@ class SearchViewModel(
 
     val query = MutableStateFlow("")
     val isLoading = MutableStateFlow(false)
+
+    val selectedSearchResult = MutableStateFlow<SearchResultItem?>(null)
+    val selectedStockQuote = MutableStateFlow<StockQuote?>(null)
+    val isSelectedStockQuoteLoading = MutableStateFlow(false)
+
     private var saveSearchResultsJob: Job? = null
 
     fun start() {
@@ -76,6 +82,26 @@ class SearchViewModel(
             }
         }
 
+        viewModelScope.launch {
+            selectedSearchResult.filterNotNull().collectLatest { item ->
+                selectedStockQuote.value = null
+                isSelectedStockQuoteLoading.value = true
+                try {
+                    selectedStockQuote.value = repository.getQuote(item.symbol)
+                } catch (throwable: Throwable) {
+                    if (throwable is CancellationException) {
+                        throw throwable
+                    }
+
+                    selectedStockQuote.value = null
+                } finally {
+                    if (currentCoroutineContext().isActive) {
+                        isSelectedStockQuoteLoading.value = false
+                    }
+                }
+            }
+        }
+
         saveSearchResultsJob = viewModelScope.launch {
             combine(query, results) { currentQuery, currentResults ->
                 currentQuery.trim() to currentResults
@@ -97,6 +123,14 @@ class SearchViewModel(
 
     fun onQueryChange(newQuery: String) {
         query.value = newQuery
+    }
+
+    fun onSearchResultDetailsClick(item: SearchResultItem) {
+        selectedSearchResult.value = item
+    }
+
+    fun clearSelectedSearchResult() {
+        selectedSearchResult.value = null
     }
 
     private suspend fun saveResultItem(item: SearchResultItem) {

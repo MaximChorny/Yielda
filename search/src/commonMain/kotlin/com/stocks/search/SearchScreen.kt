@@ -32,6 +32,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,16 +61,20 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel,
+    onDetailsClick: (SearchResultItem) -> Unit,
 ) {
-    val results by viewModel.results.collectAsStateWithLifecycle()
-    val recentSearchResults by viewModel.recentSearchResults.collectAsStateWithLifecycle()
+    val results = viewModel.results.collectAsStateWithLifecycle()
+    val recentSearchResults = viewModel.recentSearchResults.collectAsStateWithLifecycle()
     val queryState = viewModel.query.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val displayedResults = if (queryState.value.trim().isEmpty()) {
-        recentSearchResults
-    } else {
-        results
-    }
+    val isLoading = viewModel.isLoading.collectAsStateWithLifecycle()
+    val displayedResults =
+        derivedStateOf {
+            if (queryState.value.trim().isEmpty()) {
+                recentSearchResults.value
+            } else {
+                results.value
+            }
+        }
 
     LaunchedEffect(Unit) {
         viewModel.start()
@@ -80,15 +85,17 @@ fun SearchScreen(
         isLoading = isLoading,
         queryState = queryState,
         onQueryChange = viewModel::onQueryChange,
+        onDetailsClick = onDetailsClick,
     )
 }
 
 @Composable
 private fun SearchContent(
-    results: List<SearchResultItem>,
-    isLoading: Boolean,
+    results: State<List<SearchResultItem>>,
+    isLoading: State<Boolean>,
     queryState: State<String>,
     onQueryChange: (String) -> Unit,
+    onDetailsClick: (SearchResultItem) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -110,9 +117,8 @@ private fun SearchContent(
         )
         Spacer(Modifier.height(24.dp))
 
-        if (!isLoading && results.isEmpty()) {
-            Text(text = "No matches")
-        }
+
+        NoMatches(isLoading, results)
 
         Box(
             modifier = Modifier
@@ -123,14 +129,17 @@ private fun SearchContent(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (isLoading) {
+                if (isLoading.value) {
                     items(10) {
                         SearchResultRowShimmer()
                     }
                 } else {
-                    items(results, key = { item -> item.symbol }) { item ->
+                    items(results.value, key = { item -> item.symbol }) { item ->
                         SearchResultRow(
                             item = item,
+                            onSecondActionClick = {
+                                onDetailsClick(item)
+                            },
                         )
                     }
                 }
@@ -339,5 +348,16 @@ private fun SearchTextField(
                 Color.Black
             },
         )
+    }
+}
+
+
+@Composable
+private fun NoMatches(
+    isLoading: State<Boolean>,
+    results: State<List<SearchResultItem>>
+) {
+    if (!isLoading.value && results.value.isEmpty()) {
+        Text(text = "No matches")
     }
 }

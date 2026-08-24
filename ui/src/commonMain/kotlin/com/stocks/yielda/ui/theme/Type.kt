@@ -74,7 +74,7 @@ internal fun yieldaTypography(): YieldaTypography {
         ),
         toolbarTitle = TextStyle(
             fontFamily = fontFamily,
-            fontWeight = FontWeight.Normal,
+            fontWeight = FontWeight.Medium,
             fontSize = 24.sp,
             lineHeight = 24.sp,
             letterSpacing = 0.sp,
