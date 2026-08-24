@@ -3,6 +3,8 @@
 .idea/
 /local.properties
 /secrets.properties
+/lumi-*.sh
+*.xcuserstate
 .DS_Store
 /build
 /captures
