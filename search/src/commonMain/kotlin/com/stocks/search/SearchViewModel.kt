@@ -8,7 +8,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,12 +38,42 @@ class SearchViewModel(
         )
 
     val query = MutableStateFlow("")
-    private var searchJob: Job? = null
+    val isLoading = MutableStateFlow(false)
     private var saveSearchResultsJob: Job? = null
 
     fun start() {
         if (saveSearchResultsJob?.isActive == true) {
             return
+        }
+
+        viewModelScope.launch {
+            query.collectLatest { currentQuery ->
+                val trimmedQuery = currentQuery.trim()
+                if (trimmedQuery.isEmpty()) {
+                    results.value = emptyList()
+                    isLoading.value = false
+                    return@collectLatest
+                }
+
+                results.value = emptyList()
+                isLoading.value = true
+
+                try {
+                    delay(300.milliseconds)
+                    val searchResults = repository.search(trimmedQuery)
+                    results.value = searchResults
+                } catch (throwable: Throwable) {
+                    if (throwable is CancellationException) {
+                        throw throwable
+                    }
+
+                    results.value = emptyList()
+                } finally {
+                    if (currentCoroutineContext().isActive) {
+                        isLoading.value = false
+                    }
+                }
+            }
         }
 
         saveSearchResultsJob = viewModelScope.launch {
@@ -64,35 +96,7 @@ class SearchViewModel(
     }
 
     fun onQueryChange(newQuery: String) {
-        searchJob?.cancel()
-
-        val trimmedQuery = newQuery.trim()
-        if (trimmedQuery.isEmpty()) {
-            query.value = newQuery
-            results.value = emptyList()
-            return
-        }
-
-        results.value = emptyList()
         query.value = newQuery
-
-        searchJob = viewModelScope.launch {
-            delay(300.milliseconds)
-            if (query.value.trim() != trimmedQuery) {
-                return@launch
-            }
-
-            try {
-                val searchResults = repository.search(trimmedQuery)
-                results.value = searchResults
-            } catch (throwable: Throwable) {
-                if (throwable is CancellationException) {
-                    throw throwable
-                }
-
-                results.value = emptyList()
-            }
-        }
     }
 
     private suspend fun saveResultItem(item: SearchResultItem) {

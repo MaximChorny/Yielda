@@ -19,6 +19,7 @@ class FinnhubSearchRepository(
     suspend fun search(query: String): List<SearchResultItem> {
         val response = client.get("search") {
             parameter("q", query)
+            parameter("exchange", "US")
         }.body<FinnhubSearchResponse>()
 
         return response.result.map { item ->

@@ -3,6 +3,12 @@ package com.stocks.search
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +64,7 @@ fun SearchScreen(
     val results by viewModel.results.collectAsStateWithLifecycle()
     val recentSearchResults by viewModel.recentSearchResults.collectAsStateWithLifecycle()
     val queryState = viewModel.query.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val displayedResults = if (queryState.value.trim().isEmpty()) {
         recentSearchResults
     } else {
@@ -67,6 +77,7 @@ fun SearchScreen(
 
     SearchContent(
         results = displayedResults,
+        isLoading = isLoading,
         queryState = queryState,
         onQueryChange = viewModel::onQueryChange,
     )
@@ -75,6 +86,7 @@ fun SearchScreen(
 @Composable
 private fun SearchContent(
     results: List<SearchResultItem>,
+    isLoading: Boolean,
     queryState: State<String>,
     onQueryChange: (String) -> Unit,
 ) {
@@ -83,7 +95,8 @@ private fun SearchContent(
             .fillMaxSize()
             .background(YieldaTheme.colorScheme.backgroundScreen)
             .padding(horizontal = 16.dp)
-            .statusBarsPadding(),
+            .statusBarsPadding()
+            .navigationBarsPadding(),
     ) {
         MainToolbar(
             title = "Search",
@@ -97,7 +110,7 @@ private fun SearchContent(
         )
         Spacer(Modifier.height(24.dp))
 
-        if (results.isEmpty()) {
+        if (!isLoading && results.isEmpty()) {
             Text(text = "No matches")
         }
 
@@ -108,15 +121,81 @@ private fun SearchContent(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(results, key = { item -> item.symbol }) { item ->
-                    SearchResultRow(
-                        item = item,
-                    )
+                if (isLoading) {
+                    items(10) {
+                        SearchResultRowShimmer()
+                    }
+                } else {
+                    items(results, key = { item -> item.symbol }) { item ->
+                        SearchResultRow(
+                            item = item,
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SearchResultRowShimmer(
+    modifier: Modifier = Modifier,
+) {
+    val transition = rememberInfiniteTransition(label = "search-result-shimmer")
+    val shimmerOffset by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1_000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1_100,
+                easing = LinearEasing,
+            ),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "search-result-shimmer-offset",
+    )
+    val shimmerColor = if (YieldaTheme.isDarkTheme) {
+        Color(0xFFFFFFFF)
+    } else {
+        Color(0xFFD9D9D9)
+    }
+    val shimmerBrush = Brush.linearGradient(
+        colors = listOf(
+            shimmerColor.copy(alpha = 0.35f),
+            shimmerColor.copy(alpha = 0.75f),
+            shimmerColor.copy(alpha = 0.35f),
+        ),
+        start = Offset(shimmerOffset - 350f, shimmerOffset - 350f),
+        end = Offset(shimmerOffset, shimmerOffset),
+    )
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = YieldaTheme.colorScheme.searchFieldBackground,
+                shape = RoundedCornerShape(10.dp),
+            )
+            .padding(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .background(shimmerBrush, CircleShape),
+        )
+
+        Spacer(modifier = Modifier.size(10.dp))
+
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .height(18.dp)
+                .fillMaxWidth(0.6f)
+                .background(shimmerBrush, RoundedCornerShape(6.dp)),
+        )
     }
 }
 
@@ -148,7 +227,7 @@ private fun SearchResultRow(
                     text = item.symbol.firstOrNull()?.uppercase() ?: item.description.firstOrNull()
                         ?.uppercase().orEmpty(),
                     color = YieldaTheme.colorScheme.onBackground,
-                    style = YieldaTheme.typography.medium,
+                    style = YieldaTheme.typography.medium.copy(fontSize = 24.sp),
                     maxLines = 1,
                 )
             } else {
