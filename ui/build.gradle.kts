@@ -38,6 +38,7 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            implementation(compose.components.uiToolingPreview)
             implementation(compose.components.resources)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
@@ -47,9 +48,5 @@ kotlin {
             implementation(kotlin("test"))
         }
 
-        androidMain.dependencies {
-            implementation(libs.androidx.compose.ui.tooling.preview)
-            implementation(libs.androidx.compose.ui.tooling)
-        }
     }
 }

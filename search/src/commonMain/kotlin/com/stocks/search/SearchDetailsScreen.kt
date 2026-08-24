@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stocks.yielda.ui.componens.MainToolbar
+import com.stocks.yielda.ui.componens.PrimaryButton
 import com.stocks.yielda.ui.componens.stockchart.PricePoint
 import com.stocks.yielda.ui.componens.stockchart.StockPriceChart
 import com.stocks.yielda.ui.componens.stockchart.StockPriceChartState
@@ -78,21 +79,12 @@ fun SearchDetailsScreen(
                 viewModel.onSelectedStockChartPeriodChange(period)
             },
         )
-        Text(
-            text = selectedItem.displaySymbol,
-            color = YieldaTheme.colorScheme.textSecondary,
-            style = YieldaTheme.typography.regular.copy(fontSize = 16.sp),
-        )
-        Text(
-            text = selectedItem.symbol,
-            color = YieldaTheme.colorScheme.textSecondary,
-            style = YieldaTheme.typography.regular.copy(fontSize = 16.sp),
-        )
-        Text(
-            text = selectedItem.type,
-            color = YieldaTheme.colorScheme.textSecondary,
-            style = YieldaTheme.typography.regular.copy(fontSize = 16.sp),
-        )
+
+        Spacer(Modifier.weight(1f))
+
+        PrimaryButton(enabled = true, text = "Buy", onClick = {
+
+        })
     }
 }
 

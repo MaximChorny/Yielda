@@ -3,9 +3,9 @@ package com.stocks.yielda.ui.componens.stockchart
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.stocks.yielda.ui.theme.YieldaTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Preview(
     name = "Stock Price Chart",
