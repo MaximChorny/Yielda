@@ -17,3 +17,8 @@ data class StockQuote(
     val openPriceOfTheDay: Double,
     val previousClosePrice: Double,
 )
+
+data class StockPricePoint(
+    val timestamp: Long,
+    val price: Double,
+)

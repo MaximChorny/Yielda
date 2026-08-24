@@ -15,10 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,9 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.stocks.yielda.ui.componens.MainToolbar
-import com.stocks.yielda.ui.componens.stockchart.ChartPeriod
 import com.stocks.yielda.ui.componens.stockchart.PricePoint
 import com.stocks.yielda.ui.componens.stockchart.StockPriceChart
+import com.stocks.yielda.ui.componens.stockchart.StockPriceChartState
 import com.stocks.yielda.ui.theme.YieldaTheme
 
 @Composable
@@ -38,8 +34,12 @@ fun SearchDetailsScreen(
 ) {
     val selectedItem = viewModel.selectedSearchResult.collectAsStateWithLifecycle().value ?: return
     val selectedStockQuote = viewModel.selectedStockQuote.collectAsStateWithLifecycle().value
-    var selectedPeriod by remember { mutableStateOf(ChartPeriod.Month) }
-    val chartPoints = remember(selectedPeriod) { mockChartPoints(selectedPeriod) }
+    val selectedStockChartPeriod =
+        viewModel.selectedStockChartPeriod.collectAsStateWithLifecycle().value
+    val selectedStockChartPoints =
+        viewModel.selectedStockChartPoints.collectAsStateWithLifecycle().value
+    val isSelectedStockChartLoading =
+        viewModel.isSelectedStockChartLoading.collectAsStateWithLifecycle().value
 
     Column(
         modifier = Modifier
@@ -58,7 +58,6 @@ fun SearchDetailsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
         Text(
             text = selectedItem.description,
             color = YieldaTheme.colorScheme.onBackground,
@@ -68,11 +67,15 @@ fun SearchDetailsScreen(
             quote = selectedStockQuote,
         )
         StockPriceChart(
-            points = chartPoints,
-            selectedPeriod = selectedPeriod,
+            state = if (isSelectedStockChartLoading) {
+                StockPriceChartState.Loading
+            } else {
+                StockPriceChartState.Content(selectedStockChartPoints.toPricePoints())
+            },
+            selectedPeriod = selectedStockChartPeriod,
             currencySymbol = "$",
             onPeriodSelected = { period ->
-                selectedPeriod = period
+                viewModel.onSelectedStockChartPeriodChange(period)
             },
         )
         Text(
@@ -145,30 +148,10 @@ private fun Double.withSign(): String =
         toString()
     }
 
-private fun mockChartPoints(period: ChartPeriod): List<PricePoint> {
-    val count = when (period) {
-        ChartPeriod.Day -> 18
-        ChartPeriod.Week -> 28
-        ChartPeriod.Month -> 42
-        ChartPeriod.Year -> 64
-        ChartPeriod.All -> 96
-    }
-    val start = 1_700_000_000_000L
-    val step = when (period) {
-        ChartPeriod.Day -> 3_600_000L
-        ChartPeriod.Week -> 21_600_000L
-        ChartPeriod.Month -> 86_400_000L
-        ChartPeriod.Year -> 604_800_000L
-        ChartPeriod.All -> 2_592_000_000L
-    }
-
-    return List(count) { index ->
-        val trend = index * 1.25
-        val wave = ((index % 7) - 3) * 3.4
-        val pullback = if (index % 19 > 14) -12.0 else 0.0
+private fun List<StockPricePoint>.toPricePoints(): List<PricePoint> =
+    map { point ->
         PricePoint(
-            timestamp = start + index * step,
-            price = 180.0 + trend + wave + pullback,
+            timestamp = point.timestamp,
+            price = point.price,
         )
     }
-}

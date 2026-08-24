@@ -7,7 +7,7 @@ import io.ktor.client.plugins.logging.Logging
 
 expect fun createKtorLogger(): Logger
 
-fun HttpClientConfig<*>.installFinnhubLogging() {
+fun HttpClientConfig<*>.installApiLogging() {
     install(Logging) {
         logger = createKtorLogger()
         level = LogLevel.ALL

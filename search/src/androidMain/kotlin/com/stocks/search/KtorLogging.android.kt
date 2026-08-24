@@ -5,6 +5,6 @@ import io.ktor.client.plugins.logging.Logger
 
 actual fun createKtorLogger(): Logger = object : Logger {
     override fun log(message: String) {
-        Log.d("FinnhubHttp", message)
+        Log.d("MarketDataHttp", message)
     }
 }

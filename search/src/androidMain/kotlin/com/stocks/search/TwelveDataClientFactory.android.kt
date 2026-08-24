@@ -6,11 +6,10 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.URLProtocol
-import io.ktor.http.path
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-actual fun createFinnhubHttpClient(apiKey: String): HttpClient = HttpClient(CIO) {
+actual fun createTwelveDataHttpClient(apiKey: String): HttpClient = HttpClient(CIO) {
     installApiLogging()
 
     install(ContentNegotiation) {
@@ -32,9 +31,8 @@ actual fun createFinnhubHttpClient(apiKey: String): HttpClient = HttpClient(CIO)
     defaultRequest {
         url {
             protocol = URLProtocol.HTTPS
-            host = "finnhub.io"
-            path("api", "v1/")
-            parameters.append("token", apiKey)
+            host = "api.twelvedata.com"
+            parameters.append("apikey", apiKey)
         }
     }
 }

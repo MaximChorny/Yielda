@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stocks.search.repo.FinnhubSearchRepository
 import com.stocks.search.repo.RecentSearchRepository
+import com.stocks.search.repo.TwelveDataRepository
+import com.stocks.yielda.ui.componens.stockchart.ChartPeriod
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -27,6 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class SearchViewModel(
     private val repository: FinnhubSearchRepository,
     private val recentSearchRepository: RecentSearchRepository,
+    private val twelveDataRepository: TwelveDataRepository,
 ) : ViewModel() {
 
     val results = MutableStateFlow<List<SearchResultItem>>(emptyList())
@@ -44,6 +47,9 @@ class SearchViewModel(
     val selectedSearchResult = MutableStateFlow<SearchResultItem?>(null)
     val selectedStockQuote = MutableStateFlow<StockQuote?>(null)
     val isSelectedStockQuoteLoading = MutableStateFlow(false)
+    val selectedStockChartPeriod = MutableStateFlow(ChartPeriod.Month)
+    val selectedStockChartPoints = MutableStateFlow<List<StockPricePoint>>(emptyList())
+    val isSelectedStockChartLoading = MutableStateFlow(false)
 
     private var saveSearchResultsJob: Job? = null
 
@@ -102,6 +108,39 @@ class SearchViewModel(
             }
         }
 
+        viewModelScope.launch {
+            combine(
+                selectedSearchResult,
+                selectedStockChartPeriod,
+            ) { item, period ->
+                item to period
+            }.collectLatest { (item, period) ->
+                selectedStockChartPoints.value = emptyList()
+                if (item == null) {
+                    isSelectedStockChartLoading.value = false
+                    return@collectLatest
+                }
+
+                isSelectedStockChartLoading.value = true
+                try {
+                    selectedStockChartPoints.value = twelveDataRepository.getPricePoints(
+                        symbol = item.symbol,
+                        period = period,
+                    )
+                } catch (throwable: Throwable) {
+                    if (throwable is CancellationException) {
+                        throw throwable
+                    }
+
+                    selectedStockChartPoints.value = emptyList()
+                } finally {
+                    if (currentCoroutineContext().isActive) {
+                        isSelectedStockChartLoading.value = false
+                    }
+                }
+            }
+        }
+
         saveSearchResultsJob = viewModelScope.launch {
             combine(query, results) { currentQuery, currentResults ->
                 currentQuery.trim() to currentResults
@@ -129,8 +168,14 @@ class SearchViewModel(
         selectedSearchResult.value = item
     }
 
+    fun onSelectedStockChartPeriodChange(period: ChartPeriod) {
+        selectedStockChartPeriod.value = period
+    }
+
     fun clearSelectedSearchResult() {
         selectedSearchResult.value = null
+        selectedStockQuote.value = null
+        selectedStockChartPoints.value = emptyList()
     }
 
     private suspend fun saveResultItem(item: SearchResultItem) {

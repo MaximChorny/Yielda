@@ -19,6 +19,7 @@ val secretsProperties = Properties().apply {
 }
 
 val finnhubApiKey: String = secretsProperties.getProperty("FINNHUB_API_KEY", "")
+val twelveDataApiKey: String = secretsProperties.getProperty("TWELVE_DATA_API_KEY", "")
 
 compose.resources {
     packageOfResClass = "com.stocks.search.generated.resources"
@@ -96,5 +97,6 @@ buildkonfig {
 
     defaultConfigs {
         buildConfigField(FieldSpec.Type.STRING, "FINNHUB_API_KEY", finnhubApiKey)
+        buildConfigField(FieldSpec.Type.STRING, "TWELVE_DATA_API_KEY", twelveDataApiKey)
     }
 }

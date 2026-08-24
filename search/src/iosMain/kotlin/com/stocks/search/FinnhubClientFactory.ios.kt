@@ -11,7 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 actual fun createFinnhubHttpClient(apiKey: String): HttpClient = HttpClient(Darwin) {
-    installFinnhubLogging()
+    installApiLogging()
 
     install(ContentNegotiation) {
         json(
