@@ -4,6 +4,7 @@
 /local.properties
 /secrets.properties
 /lumi-*.sh
+xcuserdata/
 *.xcuserstate
 .DS_Store
 /build
